@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Ultimate Machas Tournament</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #users { list-style-type: none; margin: 0; padding: 0; float: right; background-color: grey;}
+      #users li { padding: 5px 10px; }
+      .cursive {font-style: italic;}
+    </style>
+  </head>
+  <body>
+    <ul id="users"></ul>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+    $(function () {
+      var socket = io();
+      var next_message = "";
+      $('form').submit(function(){
+        socket.emit(next_message, $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+      socket.on('get_name', function(msg){
+        // Set next message
+        next_message = msg;
+        // Print it
+        $('#messages').append($('<li>').text("What's your name?"));
+      });
+      socket.on('get_fighter_name', function(msg){
+        // Set next message
+        next_message = msg;
+        // Print it
+        $('#messages').append($('<li>').text("What's your fighter's name?"));
+      });
+      socket.on('waiting_ready', function(msg){
+        // Set next message
+        next_message = msg;
+        $('#messages').append($('<li>').text("Your character is \n" + `${msg.name}\nHP: ${msg.hp}\nAttack:${msg.attack}\nDefense:${msg.defense}\nSpeed:${msg.speed}` ));
+        // Print it
+        $('#messages').append($('<li>').text("Waiting for everyone to be ready (and at least 2 players)"));
+      });
+      socket.on('waiting_turn_ready', function(){
+        $('#messages').append($('<li>').text("Got it! Waiting for everyone to choose an action"));
+      });
+      socket.on('start', function(){
+        $('#messages').append($('<li>').text("Fight started!"));
+      });
+      socket.on('play_turn', function(){
+        next_message = "play_turn";
+        $('#messages').append($('<li>').text("What do you wanna do? Attack - Defend"));
+      });
+      socket.on('turn_result', function(msg){
+        //next_message = msg.status;
+        $('#messages').append($('<li>').text("Turn Over! Here's what happened: "));
+        for(var i=0;i<msg.length;i++){
+          $('#messages').append($('<li>').text(msg[i]));
+        }
+      });
+      socket.on('died', function(){
+        $('#m').disable();
+        $('#messages').append($('<li>').text("You died!"));
+      });
+      socket.on('game_result', function(msg){
+        console.log(msg);
+        $('#messages').append($('<li>').text("Results are in!"));
+        for(var i=0;i<msg.length;i++){
+          $('#messages').append($('<li>').text(msg[i]));
+        }
+      });
+      // socket.on('chat message', function(msg){
+      //   $('#messages').append($('<li>').text(msg[0] + ": " + msg[1]));
+      // });
+      // socket.on('server', function(msg){
+      //   console.log(msg);
+      // });
+      // socket.on('me message', function(msg){
+      //   $('#messages').append($('<li class="cursive">').text(msg[0] + " " + msg[1]));
+      // })
+      // socket.on('user list', function(userList){
+      //   // Iterate through the given message
+      //   var textUserList = "";
+      //   userList.map( function(user) {
+      //        textUserList += "<li>" + user + "</li>";
+      //   });
+      //   socket.on('game logic', function(msg){
+      //     console.log(msg);
+      //   });
+      //   $('#users').html(textUserList);
+      // });
+    });
+  </script>
+  </body>
+</html>
